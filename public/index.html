@@ -1,0 +1,49 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anonymous Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #chat-box { border: 1px solid #000; width: 300px; height: 400px; overflow-y: scroll; margin-bottom: 10px; }
+    #message { width: 200px; }
+  </style>
+</head>
+<body>
+  <h2>Anonymous Chat</h2>
+  <div id="chat-box"></div>
+  <input id="message" type="text" placeholder="Enter your message...">
+  <button id="send-btn">Send</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const chatBox = document.getElementById('chat-box');
+    const messageInput = document.getElementById('message');
+    const sendBtn = document.getElementById('send-btn');
+
+    sendBtn.addEventListener('click', () => {
+      const message = messageInput.value;
+      if (message) {
+        socket.emit('userMessage', message);
+        messageInput.value = '';
+        addMessageToChat('You', message);
+      }
+    });
+
+    socket.on('moderatorMessage', (msg) => {
+      addMessageToChat('Moderator', msg);
+    });
+
+    function addMessageToChat(sender, msg) {
+      const messageElement = document.createElement('p');
+      messageElement.textContent = `${sender}: ${msg}`;
+      chatBox.appendChild(messageElement);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+</body>
+</html>

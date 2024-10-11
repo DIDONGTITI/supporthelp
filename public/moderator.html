@@ -1,0 +1,67 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Moderator Panel</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #chat-area { width: 300px; height: 400px; border: 1px solid #000; overflow-y: scroll; margin-bottom: 10px; }
+    #response { width: 200px; }
+  </style>
+</head>
+<body>
+  <h2>Moderator Panel</h2>
+  <div id="user-list">
+    <h3>Users</h3>
+    <ul id="user-list-ul"></ul>
+  </div>
+  <div id="chat-area"></div>
+  <input id="response" type="text" placeholder="Respond...">
+  <button id="respond-btn">Send</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let activeUserId = null;
+
+    const userListUl = document.getElementById('user-list-ul');
+    const chatArea = document.getElementById('chat-area');
+    const responseInput = document.getElementById('response');
+    const respondBtn = document.getElementById('respond-btn');
+
+    socket.on('newMessageForModerator', ({ userId, message }) => {
+      if (!document.getElementById(`user-${userId}`)) {
+        const userElement = document.createElement('li');
+        userElement.textContent = `User ${userId}`;
+        userElement.id = `user-${userId}`;
+        userElement.addEventListener('click', () => {
+          activeUserId = userId;
+          chatArea.innerHTML = '';
+          addMessageToChat('User', message);
+        });
+        userListUl.appendChild(userElement);
+      } else if (activeUserId === userId) {
+        addMessageToChat('User', message);
+      }
+    });
+
+    respondBtn.addEventListener('click', () => {
+      const message = responseInput.value;
+      if (message && activeUserId) {
+        socket.emit('moderatorMessage', { userId: activeUserId, message });
+        responseInput.value = '';
+        addMessageToChat('Moderator', message);
+      }
+    });
+
+    function addMessageToChat(sender, msg) {
+      const messageElement = document.createElement('p');
+      messageElement.textContent = `${sender}: ${msg}`;
+      chatArea.appendChild(messageElement);
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+  </script>
+</body>
+</html>
